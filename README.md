@@ -15,7 +15,6 @@
   - [Usage](#usage)
   - [Options (`options`)](#options-options)
     - [Transport related options](#transport-related-options)
-    - [Sentry common options](#sentry-common-options)
     - [Info object (See more)](#info-object-see-more)
     - [Log Level Mapping](#log-level-mapping)
   - [License](#license)
@@ -34,17 +33,15 @@ With `winston.createLogger`:
 
 ```js
 const winston = require("winston");
-const Sentry = require("winston-transport-sentry-node").default;
+const SentryTransport = require("winston-transport-sentry-node").default;
 
 const options = {
-  sentry: {
-    dsn: "https://******@sentry.io/12345",
-  },
+  sentry: YourSentryInstance,
   level: "info",
 };
 
 const logger = winston.createLogger({
-  transports: [new Sentry(options)],
+  transports: [new SentryTransport(options)],
 });
 ```
 
@@ -65,21 +62,11 @@ See [Options](#options-options) below for custom configuration.
 
 ### Transport related options
 
-- `sentry` (Object) - a Sentry configuration object (see [Sentry Common Options](#sentry-common-options))
+- `sentry` (Sentry) - A Sentry Instance that is initialized (ex. `require("@sentry/node")`)
 - `silent` (Boolean) - suppress logging (defaults to `false`)
 - `level` (String) - transport's level of messages to log (defaults to `info`)
 - `format` (Object) - custom log format (see [Winston Formats](https://github.com/winstonjs/winston#formats))
 - `levelsMap` (Object) - optional custom mapping between Winston's log levels and Sentry's log levels ([default](#log-level-mapping))
-
-### Sentry common options
-
-- `dsn` (String) - your Sentry DSN or Data Source Name (defaults to `process.env.SENTRY_DSN`)
-- `environment` (String) - (defaults to `process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'production'`)
-- `serverName` (String) - transport's name (defaults to `winston-transport-sentry-node`)
-- `debug` (Boolean) - turns debug mode on or off (default to `process.env.SENTRY_DEBUG || false`)
-- `sampleRate` (Number) - sample rate as a percentage of events to be sent in the range of 0.0 to 1.0 (default to `1.0`)
-- `maxBreadcrumbs` (Number) - total amount of breadcrumbs that should be captured (default to `100`)
-- ... [Other options](https://docs.sentry.io/error-reporting/configuration/?platform=javascript)
 
 ### Info object ([See more](https://github.com/winstonjs/winston#streams-objectmode-and-info-objects))
 
@@ -87,12 +74,6 @@ If `info.tags` is an object, it will be sent as [Sentry Tags](https://docs.sentr
 
 ```js
 logger.error("some error", { tags: { tag1: "yo", tag2: "123" } });
-```
-
-If `info.user` is an object, it will be sent as [Sentry User](https://docs.sentry.io/platforms/javascript/#capturing-the-user).
-
-```js
-logger.error("some error", { user: { username: "somebody", id: "123" } });
 ```
 
 Additional properties of `info` are sent as [Sentry Extra Context](https://docs.sentry.io/enriching-error-data/context/?platform=javascript#extra-context).
