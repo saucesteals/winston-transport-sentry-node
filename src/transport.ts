@@ -1,24 +1,24 @@
-import * as Sentry from "@sentry/node";
+import type * as Sentry from "@sentry/node";
 import TransportStream = require("winston-transport");
 import { LEVEL } from "triple-beam";
 
 const DEFAULT_LEVELS_MAP: SeverityOptions = {
-  silly: Sentry.Severity.Debug,
-  verbose: Sentry.Severity.Debug,
-  info: Sentry.Severity.Info,
-  debug: Sentry.Severity.Debug,
-  warn: Sentry.Severity.Warning,
-  error: Sentry.Severity.Error,
+  silly: "debug",
+  verbose: "debug",
+  info: "info",
+  debug: "debug",
+  warn: "warning",
+  error: "error",
 };
 
 export interface SentryTransportOptions
   extends TransportStream.TransportStreamOptions {
-  sentry?: Sentry.NodeOptions;
+  sentry: typeof Sentry;
   levelsMap?: SeverityOptions;
 }
 
 interface SeverityOptions {
-  [key: string]: Sentry.Severity;
+  [key: string]: string;
 }
 
 class ExtendedError extends Error {
@@ -34,15 +34,15 @@ class ExtendedError extends Error {
 
 export default class SentryTransport extends TransportStream {
   public silent = false;
-
+  private sentry: typeof Sentry;
   private levelsMap = {};
 
-  public constructor(opts?: SentryTransportOptions) {
+  public constructor(opts: SentryTransportOptions) {
     super(opts);
 
     this.levelsMap = this.setLevelsMap(opts && opts.levelsMap);
     this.silent = (opts && opts.silent) || false;
-    Sentry.init(SentryTransport.withDefaults((opts && opts.sentry) || {}));
+    this.sentry = opts?.sentry;
   }
 
   public log(info: any, callback: () => void) {
@@ -57,7 +57,7 @@ export default class SentryTransport extends TransportStream {
 
     const sentryLevel = (this.levelsMap as any)[winstonLevel];
 
-    Sentry.configureScope((scope) => {
+    this.sentry.configureScope((scope) => {
       scope.clear();
 
       if (tags !== undefined && SentryTransport.isObject(tags)) {
@@ -86,24 +86,20 @@ export default class SentryTransport extends TransportStream {
     if (SentryTransport.shouldLogException(sentryLevel)) {
       const error =
         message instanceof Error ? message : new ExtendedError(info);
-      Sentry.captureException(error);
+      this.sentry.captureException(error);
 
       return callback();
     }
 
     // Capturing Messages
-    Sentry.captureMessage(message, sentryLevel);
+    this.sentry.captureMessage(message, sentryLevel);
     return callback();
   }
 
   end(...args: any[]) {
-    Sentry.flush().then(() => {
+    this.sentry.flush().then(() => {
       super.end(...args);
     });
-  }
-
-  public get sentry() {
-    return Sentry;
   }
 
   private setLevelsMap = (options?: SeverityOptions): SeverityOptions => {
@@ -113,7 +109,7 @@ export default class SentryTransport extends TransportStream {
 
     const customLevelsMap = Object.keys(options).reduce(
       (acc: { [key: string]: any }, winstonSeverity: string) => {
-        acc[winstonSeverity] = Sentry.Severity.fromString(
+        acc[winstonSeverity] = this.sentry.Severity.fromString(
           options[winstonSeverity]
         );
         return acc;
@@ -127,23 +123,6 @@ export default class SentryTransport extends TransportStream {
     };
   };
 
-  private static withDefaults(options: Sentry.NodeOptions) {
-    return {
-      ...options,
-      dsn: (options && options.dsn) || process.env.SENTRY_DSN || "",
-      serverName:
-        (options && options.serverName) || "winston-transport-sentry-node",
-      environment:
-        (options && options.environment) ||
-        process.env.SENTRY_ENVIRONMENT ||
-        process.env.NODE_ENV ||
-        "production",
-      debug: (options && options.debug) || !!process.env.SENTRY_DEBUG || false,
-      sampleRate: (options && options.sampleRate) || 1.0,
-      maxBreadcrumbs: (options && options.maxBreadcrumbs) || 100,
-    };
-  }
-
   // private normalizeMessage(msg: any) {
   //   return msg && msg.message ? msg.message : msg;
   // }
@@ -154,6 +133,6 @@ export default class SentryTransport extends TransportStream {
   }
 
   private static shouldLogException(level: Sentry.Severity) {
-    return level === Sentry.Severity.Fatal || level === Sentry.Severity.Error;
+    return level === "fatal" || level === "error";
   }
 }
