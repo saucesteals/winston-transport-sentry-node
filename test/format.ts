@@ -18,7 +18,7 @@ describe("SentryTransport", () => {
     const transport = new SentryTransport({
       sentry: {
         dsn: "https://something@localhost:443/123",
-        beforeSend(evt) {
+        beforeSend(evt: any) {
           expect(evt.tags).to.have.property("formatted");
           expect((evt.tags || {}).formatted).to.equal(true);
           done();
@@ -38,7 +38,7 @@ describe("SentryTransport", () => {
     const transport = new SentryTransport({
       sentry: {
         dsn: "https://something@localhost:443/123",
-        beforeSend(evt) {
+        beforeSend(evt: any) {
           expect(evt.level).to.equal("warning");
           done();
           return evt;
