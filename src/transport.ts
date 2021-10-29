@@ -51,47 +51,25 @@ export default class SentryTransport extends TransportStream {
 
     if (this.silent) return callback();
 
-    const { message, tags, user, ...meta } = info;
+    const { message, tags, ...extra } = info;
     const winstonLevel = info[LEVEL];
 
     const sentryLevel = (this.levelsMap as any)[winstonLevel];
 
-    this.sentry.configureScope((scope: any) => {
-      scope.clear();
-
-      if (tags !== undefined && SentryTransport.isObject(tags)) {
-        scope.setTags(tags);
-      }
-
-      scope.setExtras(meta);
-
-      if (user !== undefined && SentryTransport.isObject(user)) {
-        scope.setUser(user);
-      }
-
-      // TODO: add fingerprints
-      // scope.setFingerprint(['{{ default }}', path]); // fingerprint should be an array
-
-      // scope.clear();
-    });
-
-    // TODO: add breadcrumbs
-    // Sentry.addBreadcrumb({
-    //   message: 'My Breadcrumb',
-    //   // ...
-    // });
-
-    // Capturing Errors / Exceptions
     if (SentryTransport.shouldLogException(sentryLevel)) {
       const error =
         message instanceof Error ? message : new ExtendedError(info);
-      this.sentry.captureException(error);
+      this.sentry.captureException(error, { tags, extra });
 
       return callback();
     }
 
     // Capturing Messages
-    this.sentry.captureMessage(message, sentryLevel);
+    this.sentry.captureMessage(message, {
+      level: sentryLevel,
+      tags,
+      extra,
+    });
     return callback();
   }
 
