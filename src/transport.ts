@@ -1,4 +1,3 @@
-import type * as Sentry from "@sentry/node";
 import TransportStream = require("winston-transport");
 import { LEVEL } from "triple-beam";
 
@@ -13,7 +12,7 @@ const DEFAULT_LEVELS_MAP: SeverityOptions = {
 
 export interface SentryTransportOptions
   extends TransportStream.TransportStreamOptions {
-  sentry: typeof Sentry;
+  sentry: any;
   levelsMap?: SeverityOptions;
 }
 
@@ -34,7 +33,7 @@ class ExtendedError extends Error {
 
 export default class SentryTransport extends TransportStream {
   public silent = false;
-  private sentry: typeof Sentry;
+  private sentry: any;
   private levelsMap = {};
 
   public constructor(opts: SentryTransportOptions) {
@@ -45,7 +44,7 @@ export default class SentryTransport extends TransportStream {
     this.sentry = opts?.sentry;
   }
 
-  public log(info: any, callback: () => void) {
+  public log(info: any, callback: () => void): void {
     setImmediate(() => {
       this.emit("logged", info);
     });
@@ -57,7 +56,7 @@ export default class SentryTransport extends TransportStream {
 
     const sentryLevel = (this.levelsMap as any)[winstonLevel];
 
-    this.sentry.configureScope((scope) => {
+    this.sentry.configureScope((scope: any) => {
       scope.clear();
 
       if (tags !== undefined && SentryTransport.isObject(tags)) {
@@ -96,7 +95,7 @@ export default class SentryTransport extends TransportStream {
     return callback();
   }
 
-  end(...args: any[]) {
+  end(...args: any[]): void {
     this.sentry.flush().then(() => {
       super.end(...args);
     });
@@ -132,7 +131,7 @@ export default class SentryTransport extends TransportStream {
     return type === "function" || (type === "object" && !!obj);
   }
 
-  private static shouldLogException(level: Sentry.Severity) {
+  private static shouldLogException(level: string) {
     return level === "fatal" || level === "error";
   }
 }
