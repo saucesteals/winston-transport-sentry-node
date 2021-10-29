@@ -1,5 +1,4 @@
 import TransportStream = require("winston-transport");
-import { LEVEL } from "triple-beam";
 
 const DEFAULT_LEVELS_MAP: SeverityOptions = {
   silly: "debug",
