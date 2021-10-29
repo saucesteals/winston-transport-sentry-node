@@ -104,11 +104,6 @@ export default class SentryTransport extends TransportStream {
   //   return msg && msg.message ? msg.message : msg;
   // }
 
-  private static isObject(obj: any) {
-    const type = typeof obj;
-    return type === "function" || (type === "object" && !!obj);
-  }
-
   private static shouldLogException(level: string) {
     return level === "fatal" || level === "error";
   }
