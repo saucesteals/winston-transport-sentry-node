@@ -50,7 +50,7 @@ export default class SentryTransport extends TransportStream {
 
     if (this.silent) return callback();
 
-    const { message, tags, level, ...extra } = info;
+    const { message, tags, level, category, type, ...extra } = info;
 
     extra.winstonLevel = level;
 
@@ -64,11 +64,16 @@ export default class SentryTransport extends TransportStream {
       return callback();
     }
 
-    // Capturing Messages
-    this.sentry.captureMessage(message, {
+    // Capturing breadcrumbs
+    this.sentry.addBreadcrumb({
+      message,
       level: sentryLevel,
-      tags,
-      extra,
+      category,
+      type,
+      data: {
+        tags,
+        extra,
+      },
     });
     return callback();
   }
