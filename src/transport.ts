@@ -53,8 +53,6 @@ export default class SentryTransport extends TransportStream {
 
     const { message, tags, level, category, type, extra } = info;
 
-    extra.winstonLevel = level;
-
     const sentryLevel = (this.levelsMap as any)[level];
 
     if (SentryTransport.shouldLogException(sentryLevel)) {
