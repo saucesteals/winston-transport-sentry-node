@@ -44,13 +44,14 @@ export default class SentryTransport extends TransportStream {
   }
 
   public log(info: any, callback: () => void): void {
+    /* eslint-disable */
     setImmediate(() => {
       this.emit("logged", info);
     });
 
     if (this.silent) return callback();
 
-    const { message, tags, level, category, type, ...extra } = info;
+    const { message, tags, level, category, type, extra } = info;
 
     extra.winstonLevel = level;
 
@@ -64,18 +65,21 @@ export default class SentryTransport extends TransportStream {
       return callback();
     }
 
+    const data = {} as any;
+
+    if (extra) data.extra = extra;
+    if (tags) data.tags = tags;
+
     // Capturing breadcrumbs
     this.sentry.addBreadcrumb({
       message,
       level: sentryLevel,
       category,
       type,
-      data: {
-        tags,
-        extra,
-      },
+      data,
     });
     return callback();
+    /* eslint-enable */
   }
 
   end(...args: any[]): void {
